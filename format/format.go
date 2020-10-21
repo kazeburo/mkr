@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 	"time"
 
@@ -33,7 +34,14 @@ func PrettyPrintJSON(outStream io.Writer, src interface{}) error {
 func JSONMarshalIndent(src interface{}, prefix, indent string) string {
 	dataRaw, err := json.MarshalIndent(src, prefix, indent)
 	logger.DieIf(err)
-	return replaceAngleBrackets(string(dataRaw))
+	return replaceAngleBrackets(replaceNullIfSlice(string(dataRaw), reflect.TypeOf(src).Kind()))
+}
+
+func replaceNullIfSlice(s string, kind reflect.Kind) string {
+	if (kind == reflect.Slice || kind == reflect.Array) && s == "null" {
+		return "[]"
+	}
+	return s
 }
 
 func replaceAngleBrackets(s string) string {
